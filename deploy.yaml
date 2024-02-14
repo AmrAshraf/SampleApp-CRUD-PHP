@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: <microservice-name>
+  labels:
+    app: <microservice-name>
+spec:
+  replicas: <replicas>
+  selector:
+    matchLabels:
+      app: <microservice-name>
+  template:
+    metadata:
+      labels:
+        app: <microservice-name>
+    spec:
+      containers:
+      - name: <microservice-name>
+        image: <image-registry>/<microservice-name>:<tag>
+        ports:
+        - containerPort: <container-port>
+        # Additional container specifications like resources, env vars etc.
+      livenessProbe:
+        # Liveness probe configuration
+      readinessProbe:
+        # Readiness probe configuration
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: <microservice-name>-service
+spec:
+  selector:
+    app: <microservice-name>
+  ports:
+  - protocol: TCP
+    port: <service-port>
+    targetPort: <container-port>
+    # Additional service configurations
