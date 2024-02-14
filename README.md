@@ -1,65 +1,134 @@
-[![Rate your Sample](views/Ratesample.png)][ss1][![Yes](views/Thumbup.png)][ss2][![No](views/Thumbdown.png)][ss3]
+# Jenkins Pipeline for Microservice Deployment
 
-# SampleApp-CRUD-PHP
+This Jenkins pipeline automates the deployment process of a microservice, including building a Docker image, pushing it to AWS ECR, performing SonarQube analysis for both .NET and PHP, and finally deploying the microservice using Kubernetes.
 
-Please use this CRUD examples combined with the doc: https://intuit.github.io/QuickBooks-V3-PHP-SDK/
+## Prerequisites
 
-You will find examples with using OAuth1/OAuth2 tokens, SendEmail, get Reports, DownloadPDF, etc in the doc.
+- Jenkins installed and configured
+- AWS ECR repository set up
+- SonarQube server configured for the projects
+- Kubernetes cluster configured and accessible
 
-SampleApp-CRUD-PHP
+## Jenkins Pipeline Stages
 
-<p>Welcome to the Intuit Developer's PHP Sample App for CRUD operations.</p>
-<p>This sample app provides working examples of how to integrate your app with the Intuit Small Business ecosystem. Specifically, this sample app demonstrates how to:</p>
+### 1. Build Docker Image
 
-<ul>
-	<li>Use the Create, Read, Query, Update, Delete, and Void entities</li>
-	<li>Perform operations using the QuickBooks PHP SDK</li>
-</ul>
+This stage builds the Docker image for the microservice.
 
-<p>Note that while these examples work, features not called out above are not intended to be taken and used in production business applications. In other words, this is not a seed project to be taken cart blanche and deployed to your production environment.</p>  
+- **Agent:** Any
+- **Environment Variables:**
+  - `MICROSERVICE_NAME`
+  - `IMAGE_REGISTRY`
+  - `TAG`
 
-<p>For example, certain concerns are not addressed at all in our samples (e.g., security, privacy, scalability). In our sample apps, we strive to strike a balance between clarity, maintainability, and performance where we can. However, clarity is ultimately the most important quality in a sample app.</p>
+### 2. Push to AWS ECR
 
-<p>Therefore there are certain instances where we might forgo a more complicated implementation (e.g., caching a frequently used value, robust error handling, more generic domain model structure) in favor of code that is easier to read. In that light, we welcome any feedback that makes our samples apps easier to learn from.</p>
+This stage pushes the Docker image to AWS ECR.
 
-## Table of Contents
+- **Agent:** Any
+- **Environment Variables:**
+  - `AWS_REGION`
+  - `AWS_ACCOUNT_ID`
 
-* [Requirements](#requirements)
-* [First Use Instructions](#first-use-instructions)
-* [Running the code](#running-the-code)
-* [Project Structure](#project-structure)
+### 3. SonarQube Analysis for .NET
 
+This stage performs SonarQube analysis for a .NET Core project.
 
-## Requirements
+- **Agent:** Any
+- **Environment Variables:**
+  - `MICROSERVICE_NAME`
+  - `SONARQUBE_URL`
+  - `SONARQUBE_LOGIN`
 
-In order to successfully run this sample app you need a few things:
+### 4. SonarQube Analysis for PHP
 
-1. Install the PHP SDK. Refer to the instructions [here](https://developer.intuit.com/docs/0100_quickbooks_online/0400_tools/0005_accounting/0209_php/0002_install_the_php_sdk).
-2. A [developer.intuit.com](http://developer.intuit.com) account.
-3. An app on [developer.intuit.com](http://developer.intuit.com) and the associated app token, consumer key, and consumer secret.
-4. One sandbox company, connect the company with your app and generate the OAuth tokens.
+This stage performs SonarQube analysis for a PHP project using Composer.
 
-## First Use Instructions
+- **Agent:** Any
+- **Environment Variables:**
+  - `MICROSERVICE_NAME`
+  - `SONARQUBE_URL`
+  - `SONARQUBE_LOGIN`
+  - `PHP_VERSION`
 
-1. Clone the GitHub repo to your computer.
-2. Update your OAuth 2 tokens
+### 5. Deploy
 
-## Running the code
+This stage deploys the microservice to a Kubernetes cluster.
 
-This app provides individual sample code for CRUD operations for various QBO entities.
-Each PHP file can be run individually.
+- **Agent:** Any
+- **Environment Variables:**
+  - `MICROSERVICE_NAME`
+  - `REPLICAS`
+  - `IMAGE_REGISTRY`
+  - `TAG`
+  - `CONTAINER_PORT`
+  - `SERVICE_PORT`
 
-Steps described below is to run the PHP file for creating a customer.
+### Post-build Action
 
-1. Open the terminal window or command prompt and cd into the CRUD directory `/SampleApp-CRUD-PHP/CRUD/Customer`.
-2. Run the command `php CustomerCreate.php`.
-3. On the console you'll see the log being generated with the new customer ID.
-4. Request/Response XMLs are generated in the folder you specified.
+- **Display SonarQube Results:**
+  - Displays the SonarQube analysis results in the Jenkins console.
 
-Follow similar steps for other classes.
+## How to Use
 
-Note: The sample code has been implemented for a company with a US locale. Certain fields may not be applicable for other locales or minor versions. Care should be taken to handle such scenarios separately.
+1. Configure the required environment variables in the Jenkins pipeline configuration.
+2. Run the Jenkins pipeline.
 
-[ss1]: #
-[ss2]: https://customersurveys.intuit.com/jfe/form/SV_9LWgJBcyy3NAwHc?check=Yes&checkpoint=SampleApp-CRUD-PHP&pageUrl=github
-[ss3]: https://customersurveys.intuit.com/jfe/form/SV_9LWgJBcyy3NAwHc?check=No&checkpoint=SampleApp-CRUD-PHP&pageUrl=github
+---
+
+## Setting Up Jenkins
+
+1. Install Jenkins on your server or machine.
+2. Configure Jenkins by following the official documentation: [Jenkins Installation Guide](https://www.jenkins.io/doc/book/installing/).
+3. Install necessary plugins for Docker, AWS, and Kubernetes integration.
+
+---
+
+## Setting Up SonarQube for Code Analysis
+
+1. Install and configure SonarQube on your server or use the SonarQube cloud service.
+2. Follow the official SonarQube documentation for installation: [SonarQube Installation Guide](https://docs.sonarqube.org/latest/setup/get-started-2-minutes/).
+3. Create a new project in SonarQube and generate a token for authentication.
+4. Set up SonarQube for .NET by installing the SonarScanner for .NET: [SonarScanner for .NET Documentation](https://docs.sonarqube.org/latest/analysis/scan/sonarscanner-for-msbuild/).
+5. Set up SonarQube for PHP by installing the SonarScanner for PHP: [SonarScanner for PHP Documentation](https://docs.sonarqube.org/latest/analysis/scan/sonarscanner-for-php/).
+6. Configure your Jenkins pipeline with the SonarQube server URL and authentication token.
+
+---
+
+## Deployment File Explanation
+Deployment Section
+apiVersion: Specifies the Kubernetes API version for the resource.
+
+kind: Defines the type of resource, in this case, a Deployment.
+
+metadata: Contains metadata such as the name and labels for the Deployment.
+
+spec: Describes the desired state for the Deployment, including the number of replicas and the pod template.
+
+replicas: Specifies the desired number of replicas for the microservice.
+
+selector: Defines how the Deployment identifies which pods to manage.
+
+template: Defines the pod template, including labels and specifications for the containers.
+
+containers: Contains information about the microservice container.
+
+name: Specifies the name of the container.
+image: Specifies the Docker image for the microservice.
+ports: Specifies the container port to expose.
+livenessProbe: Configures the liveness probe for the container.
+
+readinessProbe: Configures the readiness probe for the container.
+
+Service Section
+kind: Defines the type of resource, in this case, a Service.
+
+apiVersion: Specifies the Kubernetes API version for the resource.
+
+metadata: Contains metadata such as the name for the Service.
+
+spec: Describes the desired state for the Service.
+
+selector: Specifies the pods that the Service should target.
+ports: Specifies the ports for the Service, including the protocol, port, and target port.
+This Kubernetes deployment file can be used as a reference for deploying microservices in a Kubernetes environment. Adjust the placeholders (e.g., <microservice-name>, <replicas>, etc.) with your specific values when creating your deployment files.
